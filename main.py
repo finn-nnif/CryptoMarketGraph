@@ -1,78 +1,87 @@
 from src import *
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Bbox
+import yaml
 
-if __name__ == "__main__":
+with open("config/presets.yaml", "r") as f:
+    cfg = yaml.safe_load(f)
 
-    # LOAD
-    df = load_csv_all('data/raw/cryptocurrency.csv')
+graph_presets = cfg["graph_presets"]
 
-    # CLEAN
-    df_clean = clean_data(df, drop_duplicates=False)
-    df_clean['timestamp'] = pd.to_datetime(df_clean['timestamp'])
+def load_preset(preset_name: str):
+    cfg = graph_presets[preset_name]
 
-    var = 'total_vol'
+    # LOAD + CLEAN
+    df = load_csv_all(cfg["file"])
+    df = clean_data(df, drop_duplicates=False)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
 
-    df_clean[var] = df_clean[var].str.replace('[$,%MBT]', '', regex=True)
-    df_clean[var] = df_clean[var].astype(float)
+    if cfg["values_col"] in df.columns and df[cfg["values_col"]].dtype == "object":
+        df[cfg["values_col"]] = (
+            df[cfg["values_col"]]
+            .str.replace(r"[$,%MBT]", "", regex=True)
+            .astype(float)
+        )
 
     # PIVOT
-    df_pivot = pivot_data(df_clean, index_col='timestamp', columns_col='symbol', values_col=var)
+    df_pivot = pivot_data(df,
+                          index_col=cfg["index_col"],
+                          columns_col=cfg["columns_col"],
+                          values_col=cfg["values_col"])
 
-    all_coins = [col for col in df_pivot.columns if not df_pivot[col].isna().all()]
-    exclude_coins = [] # e.g. 'BTC', 'ETH', 'USDT'
-
-    y_cols = []
-    for coin in all_coins:
-        if coin not in exclude_coins:
-            y_cols.append(coin)
+    y_cols = [c for c in df_pivot.columns if c not in cfg["exclude_coins"]]
 
     # PLOT
-    fig, ax = plot_multi_line(df_pivot.reset_index(), x_col='timestamp', y_cols=y_cols, show_ci=False, add_legend=False)
+    if cfg["plot_func"] == "multi_line":
+        fig, ax = plot_multi_line(df_pivot.reset_index(),
+                                  x_col=cfg["index_col"],
+                                  y_cols=y_cols,
+                                  show_ci=False,
+                                  add_legend=False)
+    else:
+        raise NotImplementedError(f"plot_func '{cfg['plot_func']}' not implemented.")
 
-
-    design_lines(
-        ax,
+    # STYLE
+    design_lines(ax,
         colors=None,
-        linewidths=[1] * len(y_cols),
-        linestyles=['-'] * len(y_cols),
-        alphas=[0.8] * len(y_cols)
+        linewidths=[1]*len(y_cols),
+        linestyles=['-']*len(y_cols),
+        alphas=[0.8]*len(y_cols)
     )
 
     df_reset = df_pivot.reset_index()
-    style_line_annotation(ax, df_reset, y_cols, x_col='timestamp', offset_days=6, color=(1, 1,1), alpha=0.7)
+    style_line_annotation(ax, df_reset, y_cols,
+                          x_col=cfg["index_col"],
+                          offset_days=6,
+                          color=(1,1,1),
+                          alpha=0.7)
 
-
-    style_plot(
-        ax,
+    style_plot(ax,
         grid=True,
         grid_color=(1/3, 1/3, 1/3),
-        grid_linestyle='--',
+        grid_linestyle="--",
         grid_linewidth=0.5,
-        title="Total Volume Over Time",
-        xlabel="Date (30m)",
-        ylabel="Volume (%)",
+        title=cfg["title"],
+        xlabel=cfg["xlabel"],
+        ylabel=cfg["ylabel"],
         xtick_rotation=45,
         legend=False,
-        fig_facecolor=  (4 / 255, 4 / 255, 4 / 255),     # '#111111'
-        ax_facecolor=   (4 / 255, 4 / 255, 4 / 255),      # '#222222'
-        title_color=    (1, 1, 1),                      # white
-        label_color=    (1, 1, 1),                      # white
-        tick_color=     (1, 1, 1),                       # white
-        spine_color=    (1, 1, 1)                       # white
+        fig_facecolor=(4/255,4/255,4/255),
+        ax_facecolor=(4/255,4/255,4/255),
+        title_color=(1,1,1),
+        label_color=(1,1,1),
+        tick_color=(1,1,1),
+        spine_color=(1,1,1)
     )
 
-
-    ymin = 0
-    ymax = df_pivot[y_cols].max().max()
+    # Y-LIM
+    ymin, ymax = 0, df_pivot[y_cols].max().max()
     ymax_rounded = round_up_to_nearest(ymax)
-
-    rounded = False
     offset = 0.02 * ymax_rounded
-
-    if rounded:
-        ax.set_ylim(ymin, ymax_rounded + offset)
-    else:
-        ax.set_ylim(ymin, ymax + offset)
+    ax.set_ylim(ymin, ymax + offset)
 
     plt.show()
+
+
+if __name__ == "__main__":
+    load_preset("price_over_time")

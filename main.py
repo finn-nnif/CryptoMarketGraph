@@ -11,15 +11,16 @@ if __name__ == "__main__":
     df_clean = clean_data(df, drop_duplicates=False)
     df_clean['timestamp'] = pd.to_datetime(df_clean['timestamp'])
 
-    df_clean = remove_char(df_clean, 'price_usd', '$')
-    df_clean = remove_char(df_clean, 'price_usd', ',')
-    df_clean['price_usd'] = df_clean['price_usd'].astype(float)
+    var = 'total_vol'
+
+    df_clean[var] = df_clean[var].str.replace('[$,%MBT]', '', regex=True)
+    df_clean[var] = df_clean[var].astype(float)
 
     # PIVOT
-    df_pivot = pivot_data(df_clean, index_col='timestamp', columns_col='symbol', values_col='price_usd')
+    df_pivot = pivot_data(df_clean, index_col='timestamp', columns_col='symbol', values_col=var)
 
     all_coins = [col for col in df_pivot.columns if not df_pivot[col].isna().all()]
-    exclude_coins = ['BTC', 'ETH']
+    exclude_coins = [] # e.g. 'BTC', 'ETH', 'USDT'
 
     y_cols = []
     for coin in all_coins:
@@ -48,9 +49,9 @@ if __name__ == "__main__":
         grid_color=(1/3, 1/3, 1/3),
         grid_linestyle='--',
         grid_linewidth=0.5,
-        title="Crypto Prices Over Time",
-        xlabel="Timestamp",
-        ylabel="Price (USD)",
+        title="Total Volume Over Time",
+        xlabel="Date (30m)",
+        ylabel="Volume (%)",
         xtick_rotation=45,
         legend=False,
         fig_facecolor=  (4 / 255, 4 / 255, 4 / 255),     # '#111111'
@@ -66,8 +67,12 @@ if __name__ == "__main__":
     ymax = df_pivot[y_cols].max().max()
     ymax_rounded = round_up_to_nearest(ymax)
 
-    offset = 15
+    rounded = False
+    offset = 0.02 * ymax_rounded
 
-    ax.set_ylim(ymin, ymax_rounded + offset)
-    
+    if rounded:
+        ax.set_ylim(ymin, ymax_rounded + offset)
+    else:
+        ax.set_ylim(ymin, ymax + offset)
+
     plt.show()

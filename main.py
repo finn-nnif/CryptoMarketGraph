@@ -65,6 +65,9 @@ if __name__ == "__main__":
     ymin = 0
     ymax = df_pivot[y_cols].max().max()
     ymax_rounded = round_up_to_nearest(ymax)
-    ax.set_ylim(ymin, ymax_rounded)
 
+    offset = 15
+
+    ax.set_ylim(ymin, ymax_rounded + offset)
+    
     plt.show()

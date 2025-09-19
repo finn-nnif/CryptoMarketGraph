@@ -1,0 +1,25 @@
+graph_presets:
+  volume_over_time:
+    file: data/raw/cryptocurrency.csv
+    index_col: timestamp
+    columns_col: symbol
+    values_col: total_vol
+    exclude_coins:
+      - USDT
+    title: Total Volume Over Time
+    xlabel: Date
+    ylabel: Volume (%)
+    plot_func: multi_line
+
+  price_over_time:
+    file: data/raw/cryptocurrency.csv
+    index_col: timestamp
+    columns_col: symbol
+    values_col: price_usd
+    exclude_coins:
+      - BTC
+      - ETH
+    title: Price Over Time
+    xlabel: Date
+    ylabel: Price (USD)
+    plot_func: multi_line

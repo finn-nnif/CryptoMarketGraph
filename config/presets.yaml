@@ -23,3 +23,12 @@ graph_presets:
     xlabel: Date
     ylabel: Price (USD)
     plot_func: multi_line
+  change_scatter:
+    file: data/raw/cryptocurrency.csv
+    x_col: chg_24h
+    y_col: chg_7d
+    category_col: symbol
+    title: 24h vs 7d Change
+    xlabel: Change 24h (%)
+    ylabel: Change 7d (%)
+    plot_func: scatter

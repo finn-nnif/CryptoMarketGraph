@@ -98,53 +98,6 @@ def style_line_annotation(ax, df, y_cols, x_col='timestamp', offset_days=5, font
 
 
 
-def design_lines(ax, colors=None, linewidths=None, linestyles=None, alphas=None):
-    """
-    Style multiple lines in an Axes with per-line or uniform styles.
-    Colours are applied from order of the axes.
-
-    Parameters:
-        ax (matplotlib.axes.Axes): The axes containing the lines.
-        colors (list or str): List of colors or single color for all lines.
-        linewidths (list or float): List of linewidths or single linewidth.
-        linestyles (list or str): List of linestyles or single linestyle.
-        alphas (list or float): List of alpha values or single alpha.
-
-    If lists are shorter than the number of lines, the last value is repeated.
-    """
-    lines = ax.get_lines()
-    n = len(lines)
-
-    # Helper to expand values to match number of lines
-    def expand_param(param, n):
-        if param is None:
-            return [None]*n
-        if isinstance(param, (list, tuple)):
-            if len(param) < n:
-                # Repeat last value to fill
-                param = list(param) + [param[-1]]*(n - len(param))
-            return param
-        else:
-            # Single value, repeat for all lines
-            return [param]*n
-
-    colors = expand_param(colors, n)
-    linewidths = expand_param(linewidths, n)
-    linestyles = expand_param(linestyles, n)
-    alphas = expand_param(alphas, n)
-
-    for i, line in enumerate(lines):
-        if colors[i] is not None:
-            line.set_color(colors[i])
-        if linewidths[i] is not None:
-            line.set_linewidth(linewidths[i])
-        if linestyles[i] is not None:
-            line.set_linestyle(linestyles[i])
-        if alphas[i] is not None:
-            line.set_alpha(alphas[i])
-
-
-
 def design_points(ax, point_size=None, facecolor=None, edgecolor=None, alpha=None):
     """
     Parameters:
